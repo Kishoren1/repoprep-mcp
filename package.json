@@ -4,7 +4,7 @@
   "description": "Local-first MCP server for repoprep — turn a codebase into AI-ready context, directly inside Claude. No upload, same engine as repoprep.com.",
   "type": "module",
   "bin": {
-    "repoprep-mcp": "./dist/index.js"
+    "repoprep-mcp": "dist/index.js"
   },
   "files": [
     "dist"
@@ -28,7 +28,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Kishoren1/repoprep-mcp"
+    "url": "git+https://github.com/Kishoren1/repoprep-mcp.git"
   },
   "homepage": "https://www.repoprep.com",
   "dependencies": {
