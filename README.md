@@ -13,7 +13,7 @@ repoprep.com converts a project folder into a single, structured context documen
 
 Everything runs locally on your machine. Your code is read from disk and handed straight to Claude in the same process — it never passes through a repoprep server, and reading or processing your files never touches the network, on any tier. The only network activity this tool ever performs is license-related: one request when you activate Pro, and an occasional background check after that (see [Activating Pro](#activating-pro) below).
 
-This is an _additional_ way to use repoprep, not a replacement for the [web app](https://www.repoprep.com) or the [Chrome extension](https://chromewebstore.google.com/detail/repoprep/ocafmohghoihkdmmedcddpbggengjonc) — use whichever fits the moment. The web app and extension also handle PDF, DOCX, and XLSX files; this MCP server is scoped to source and text files (see [Supported file types](#supported-file-types) for why).
+This is an _additional_ way to use repoprep, not a replacement for the [web app](https://www.repoprep.com) or the [Chrome extension](https://chromewebstore.google.com/detail/repoprep/ocafmohghoihkdmmedcddpbggengjonc) — use whichever fits the moment. The web app also handles PDF, DOCX, and XLSX files (the extension doesn't, same as this MCP server); this MCP server is scoped to source and text files (see [Supported file types](#supported-file-types) for why).
 
 ## Requirements
 
@@ -140,7 +140,7 @@ Both are on by default and can't be disabled — the same design decision the we
 
 Source code, Markdown, JSON/YAML/TOML/config files, and plain text are read and included in full.
 
-PDF, DOCX, and XLSX are **not** parsed by this tool — a deliberate scope decision. Supporting them would pull in dependencies that roughly quintuple the install size for a capability rarely relevant to "help me work on this codebase" sessions. Files of these types still appear in the directory tree so Claude knows they exist; they're just marked `[Binary file — content not extracted]` instead of read. For projects where those formats matter, use the [web app](https://www.repoprep.com) or the [Chrome extension](https://chromewebstore.google.com/detail/repoprep/ocafmohghoihkdmmedcddpbggengjonc), both of which fully support them.
+PDF, DOCX, and XLSX are **not** parsed by this tool — a deliberate scope decision. Supporting them would pull in dependencies that roughly quintuple the install size for a capability rarely relevant to "help me work on this codebase" sessions. Files of these types still appear in the directory tree so Claude knows they exist; they're just marked `[Binary file — content not extracted]` instead of read. For projects where those formats matter, use the [web app](https://www.repoprep.com) — it's the only repoprep surface that supports them; the [Chrome extension](https://chromewebstore.google.com/detail/repoprep/ocafmohghoihkdmmedcddpbggengjonc) is scoped to source and text files too, same as this tool.
 
 ## FAQ
 
