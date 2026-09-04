@@ -3,8 +3,12 @@ import path from "node:path";
 import { z } from "zod";
 import { walkDirectory } from "./walk.js";
 import { parseFiles } from "./parsers/index.js";
-import { buildContext } from "./core/contextBuilder.js";
+import { buildContext, type ContextOutput } from "./core/contextBuilder.js";
 import { getLimits } from "./core/limits.js";
+import {
+  MAX_RESPONSE_BYTES,
+  measureResponseBytes,
+} from "./core/responseSize.js";
 import {
   getEffectiveTier,
   activateLicense,
@@ -70,7 +74,6 @@ export async function handleGetCodebaseContext(
   );
 
   const sourceName = path.basename(targetPath);
-  const output = buildContext(results, sourceName);
 
   const notes: string[] = [];
   if (walkResult.secretFiles.length > 0) {
@@ -109,8 +112,41 @@ export async function handleGetCodebaseContext(
     }
   }
 
-  const finalText =
-    notes.length > 0 ? `${output.text}\n[${notes.join(" ")}]\n` : output.text;
+  const renderText = (out: ContextOutput, extraNotes: string[]): string => {
+    const allNotes = [...notes, ...extraNotes];
+    return allNotes.length > 0
+      ? `${out.text}\n[${allNotes.join(" ")}]\n`
+      : out.text;
+  };
+
+  let output = buildContext(results, sourceName);
+  let finalText = renderText(output, []);
+
+  if (measureResponseBytes(finalText) > MAX_RESPONSE_BYTES) {
+    let lo = 0;
+    let hi = results.length;
+    let bestCount = 0;
+    let bestOutput = output;
+
+    while (lo <= hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      const candidateOutput = buildContext(results.slice(0, mid), sourceName);
+      const candidateNote = `Response trimmed to ${mid} of ${results.length} files to stay under this MCP client's ~1 MB tool-result limit — a separate, often smaller ceiling than your repoprep tier. Ask about a narrower path, or use max_files, to see the rest.`;
+      const candidateText = renderText(candidateOutput, [candidateNote]);
+
+      if (measureResponseBytes(candidateText) <= MAX_RESPONSE_BYTES) {
+        bestCount = mid;
+        bestOutput = candidateOutput;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+
+    output = bestOutput;
+    const finalNote = `Response trimmed to ${bestCount} of ${results.length} files to stay under this MCP client's ~1 MB tool-result limit — a separate, often smaller ceiling than your repoprep tier. Ask about a narrower path, or use max_files, to see the rest.`;
+    finalText = renderText(output, [finalNote]);
+  }
 
   return {
     content: [{ type: "text" as const, text: finalText }],

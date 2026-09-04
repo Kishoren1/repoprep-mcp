@@ -95,6 +95,18 @@ No license is required to use `get_codebase_context` at all — it works immedia
 
 Already bought Pro on the web app or the extension? The same email and license key activate it here too — it's one purchase, usable everywhere.
 
+## A note on very large responses
+
+The limits above are this tool's own — but the AI client you're using (Claude Desktop, Claude Code, Cursor, etc.) has a separate, independent cap on how large a single tool response can be. Several clients enforce roughly 1 MB per response, regardless of what tier you're on. This isn't something `repoprep-mcp` controls.
+
+If a project's content would exceed that ceiling — which can happen on Pro even well before hitting 200 files, depending on file sizes — this tool automatically trims the response to fit, rather than letting the client reject it with a generic, unhelpful error. When that happens, the response ends with a clear note telling you how many files were actually included and why, e.g.:
+
+```
+[Stopped at the Pro limit (200 files). Some files in this folder were not included. Response trimmed to 61 of 200 files to stay under this MCP client's ~1 MB tool-result limit — a separate, often smaller ceiling than your repoprep tier. Ask about a narrower path, or use max_files, to see the rest.]
+```
+
+If you hit this, the fix is the same as hitting any other cap: point `get_codebase_context` at a narrower path (a subfolder instead of the whole project), or set `max_files` lower to get a focused slice. Pro's 200-file / 20 MB ceiling is still real and still worth having — it just isn't the only ceiling in play once the content leaves this tool and heads to your AI client.
+
 ## Activating Pro
 
 There are two ways to activate. **The terminal is the recommended one** — it's guaranteed to work every time; the in-chat route depends on your AI client's judgment call and may not.
@@ -132,7 +144,7 @@ Both just delete the cached token — your Gumroad license itself is never touch
 Every folder is filtered before anything is read — this logic is identical to the web app's, so the same project produces the same result on either surface:
 
 - **Noise** — `node_modules`, `.git`, build output (`dist`, `build`, `.next`, etc.), lockfiles, IDE folders, and similar are skipped automatically.
-- **Secrets** — `.env` files, SSH and TLS private keys, cloud service-account credentials, and similar are detected and excluded before they're ever read, not just filtered by extension. The tool names exactly which files were excluded for this reason, so you can verify nothing sensitive was missed.
+- **Secrets** — `.env` files, SSH and TLS private keys, cloud service-account credentials, and similar are detected and excluded before they're ever read, not just filtered by extension. The tool names exactly which files were excluded for this reason, so you can verify nothing sensitive was missed. This check covers your **entire** project tree, not just whatever fits under your file/size limit — so if a secret exists anywhere in the folder you point at, it'll be named in the output even on a run that hits the free or Pro cap well before reaching it.
 
 Both are on by default and can't be disabled — the same design decision the web app makes.
 
@@ -151,7 +163,10 @@ No. Files are read from disk and passed directly to Claude in the same local pro
 No. Run `npx repoprep-mcp activate` in your terminal instead — same activation, same cached result, no AI client involved at any point. See [Activating Pro](#activating-pro).
 
 **Why does Pro cap out at 200 files instead of being unlimited?**
-Even locally, a single MCP call returning an unbounded amount of text isn't useful — Claude has its own context limits, and a cap keeps responses focused and fast. 200 files / 20 MB comfortably covers real-world projects while staying well within what's practical to hand to a model in one go.
+Even locally, a single MCP call returning an unbounded amount of text isn't useful — Claude has its own context limits, and a cap keeps responses focused and fast. 200 files / 20 MB comfortably covers real-world projects while staying well within what's practical to hand to a model in one go. In practice, your AI client's own response-size limit (see [A note on very large responses](#a-note-on-very-large-responses)) often binds before Pro's 200-file ceiling does.
+
+**I'm on Pro but got a "trimmed" response with fewer than 200 files — is that a bug?**
+No — that's this tool protecting you from a worse outcome. See [A note on very large responses](#a-note-on-very-large-responses): your AI client, not this tool, caps individual responses at roughly 1 MB, and that can bind before Pro's own 200-file / 20 MB limit does. Narrow the path or lower `max_files` to see more in one call.
 
 **Can I use this without buying Pro?**
 Yes — `get_codebase_context` works immediately with no setup, at the free tier's limits.

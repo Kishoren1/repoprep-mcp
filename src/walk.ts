@@ -29,16 +29,11 @@ export async function walkDirectory(
   rootDir: string,
   options: WalkOptions,
 ): Promise<WalkResult> {
-  const files: WalkedFile[] = [];
+  const eligibleFiles: WalkedFile[] = [];
   let skippedCount = 0;
   const secretFiles: string[] = [];
-  let totalBytes = 0;
-  let truncated = false;
-  let truncationReason: TruncationReason = null;
 
   async function walk(dir: string, relDir: string): Promise<void> {
-    if (truncated) return;
-
     let entries;
     try {
       entries = await readdir(dir, { withFileTypes: true });
@@ -50,8 +45,6 @@ export async function walkDirectory(
     entries.sort((a, b) => a.name.localeCompare(b.name));
 
     for (const entry of entries) {
-      if (truncated) return;
-
       const absPath = path.join(dir, entry.name);
       const relPath = relDir ? `${relDir}/${entry.name}` : entry.name;
 
@@ -91,24 +84,31 @@ export async function walkDirectory(
         continue;
       }
 
-      if (files.length >= options.maxFiles) {
-        truncated = true;
-        truncationReason = "max_files";
-        return;
-      }
-
-      if (totalBytes + size > options.maxTotalSizeBytes) {
-        truncated = true;
-        truncationReason = "max_size";
-        return;
-      }
-
-      files.push({ absPath, relPath: toPosix(relPath), size });
-      totalBytes += size;
+      eligibleFiles.push({ absPath, relPath: toPosix(relPath), size });
     }
   }
 
   await walk(rootDir, "");
+
+  const files: WalkedFile[] = [];
+  let totalBytes = 0;
+  let truncated = false;
+  let truncationReason: TruncationReason = null;
+
+  for (const file of eligibleFiles) {
+    if (files.length >= options.maxFiles) {
+      truncated = true;
+      truncationReason = "max_files";
+      break;
+    }
+    if (totalBytes + file.size > options.maxTotalSizeBytes) {
+      truncated = true;
+      truncationReason = "max_size";
+      break;
+    }
+    files.push(file);
+    totalBytes += file.size;
+  }
 
   return { files, skippedCount, secretFiles, truncated, truncationReason };
 }
