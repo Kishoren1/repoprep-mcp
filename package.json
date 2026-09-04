@@ -1,6 +1,6 @@
 {
   "name": "repoprep-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local-first MCP server for repoprep — turn a codebase into AI-ready context, directly inside Claude. No upload, same engine as repoprep.com.",
   "type": "module",
   "bin": {
