@@ -71,6 +71,8 @@ Activates a repoprep Pro license on this machine, using the same email and licen
 
 > "Activate my repoprep Pro license — my email is jane@example.com and the key is XXXXXXXX-XXXXXXXX-XXXXXXXX-XXXXXXXX."
 
+Some AI clients will decline to run this even though it's completely safe — sending credentials on your behalf, even to your own account on your own server, is exactly the kind of thing a cautious assistant is right to hesitate on. If that happens, use `npx repoprep-mcp activate` instead (see [Activating Pro](#activating-pro)) — it does the identical thing without an AI in the loop at all.
+
 ### `repoprep_deactivate_pro`
 
 Clears the Pro license cached on this machine, dropping `get_codebase_context` back to the free tier. Takes no parameters. Purely local — makes no network call and needs no credentials, since it's only deleting a local file, not talking to a server. Your underlying license is untouched; reactivate any time with the same email and key.
@@ -95,17 +97,17 @@ Already bought Pro on the web app or the extension? The same email and license k
 
 ## Activating Pro
 
-There are two ways to activate — same result either way, since both call the exact same verification logic and write to the exact same cache file.
+There are two ways to activate. **The terminal is the recommended one** — it's guaranteed to work every time; the in-chat route depends on your AI client's judgment call and may not.
 
-**In chat.** Ask Claude to run `repoprep_activate_pro` with your email and license key. This makes one network request to repoprep.com to verify the purchase, then caches the result locally at `~/.repoprep/token.json`. Every `get_codebase_context` call after that reads the cached license locally — no network call on the vast majority of calls.
-
-**In your terminal, with no AI involved at all.** If you'd rather not type an email and license key into a chat window — a reasonable instinct, since "an AI is asking for your credentials" is exactly the shape of thing phishing-awareness training tells people to be wary of, even when it's completely legitimate — run:
+**In your terminal (recommended), with no AI involved at all:**
 
 ```bash
 npx repoprep-mcp activate
 ```
 
-This prompts you directly in the terminal for your email and license key, verifies them with repoprep.com, and writes to the same `~/.repoprep/token.json` file. No AI client sees or handles your credentials at any point. Once it succeeds, every MCP client on the machine — Claude Desktop, Claude Code, or anything else — picks up the higher limits automatically, with nothing further to configure.
+This prompts you directly in the terminal for your email and license key, verifies them with repoprep.com, and writes the result to `~/.repoprep/token.json`. No AI client sees or handles your credentials at any point. Once it succeeds, every MCP client on the machine — Claude Desktop, Claude Code, or anything else — picks up the higher limits automatically, with nothing further to configure. This also sidesteps a real, common outcome: many AI assistants are (correctly) cautious about sending credentials out on a user's behalf, even to a service the user owns, and will decline an in-chat activation request even though it's completely safe.
+
+**In chat, as an alternative.** Ask Claude to run `repoprep_activate_pro` with your email and license key — see the example prompt under [Tools](#tools) above. This makes one network request to repoprep.com to verify the purchase and writes to the same `~/.repoprep/token.json` file. It works when your AI client is willing to run it, but don't be surprised if it declines; that's the client behaving responsibly around credential-sharing, not a bug in this tool. If it happens, fall back to the terminal command above — same outcome either way.
 
 Roughly once a day, if Pro is active, a background check quietly re-confirms the license with repoprep.com. This never blocks a request while it runs, and it exists specifically to catch server-side revocation (a refund or chargeback) — token expiry itself is checked locally, with no network needed, on every call.
 
